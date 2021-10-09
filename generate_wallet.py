@@ -66,3 +66,4 @@ print(is_seed_valid(seed))
 def getkeys():
     pub_k = SigningKey.generate(curve = NIST256p, entropy = create_seed())
     prv_k = pub_k.verifying_key
+    return pub_k,prv_k
