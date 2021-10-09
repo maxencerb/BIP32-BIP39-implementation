@@ -2,15 +2,20 @@ from word_list import word_list
 import hashlib
 import sys
 from utils import padd_binary
-
-G = (
-    0x79BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F81798,
-    0x483ADA7726A3C4655DA4FBFC0E1108A8FD17B448A68554199C47D08FFB10D4B8,
-    0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141
-)
+from ecdsa import ECDH, SECP256k1, SigningKey, VerifyingKey
+import binascii
 
 def import_mnemonic(mnemonic):
-    numbers = [word_list.index(word) for word in mnemonic.split(" ")]
+    mnemonic_list = mnemonic.split(" ")
+
+    if len(mnemonic_list) != 12:
+        raise ValueError("Invalid mnemonic length")
+    
+    for word in mnemonic_list:
+        if word not in word_list:
+            raise ValueError(f"{word} is not a valid word for an english mnemonic")
+
+    numbers = [word_list.index(word) for word in mnemonic_list]
     result = ""
     for n in numbers:
         bin_number = bin(n)[2:]
@@ -39,42 +44,34 @@ def get_masters(mnemonic):
     binary_string = bin(int.from_bytes(sha, sys.byteorder))[2:]
     for _ in range(512 - len(binary_string)):
         binary_string = "0" + binary_string
-    private_key = bytes(int(binary_string[:256], 2))
-    chain_code = bytes(int(binary_string[256:], 2))
+    private_key = from_bitstring_to_byte(binary_string[:256])
+    chain_code = from_bitstring_to_byte(binary_string[256:])
     hashlib.sha512(private_key)
 
     # Get master public key
     public_key = get_public_key(private_key)
-    return private_key, chain_code
+    return private_key, public_key, chain_code
 
-def get_public_key(master_private_key: bytes):
-    public_key = pow(G, master_private_key, G)
-    return public_key
+def get_public_key(private_key: bytes):
+    signing_key = SigningKey.from_string(private_key, curve=SECP256k1, hashfunc=hashlib.sha256)
+    ecdh = ECDH(curve = SECP256k1, private_key=signing_key)
+    public_key: VerifyingKey = ecdh.get_public_key()
+    return public_key.to_string()
 
-# def getChildren(mnemonic):
-#     code = get_masters(mnemonic)[1]
-#     child_private = Hash512(code)[0]
-     
-mnemonic = "wire crucial lazy thunder dynamic pear merit abstract pluck pistol way music"
-seed = import_mnemonic(mnemonic)
-print(seed)
-print(sys.byteorder)
-print(is_seed_valid(seed))
+# import random
+# def generate_key(self):
+#     big_int = self.__generate_big_int()
+#     big_int = big_int % (self.CURVE_ORDER - 1) # key < curve order
+#     big_int = big_int + 1 # key > 0
+#     key = hex(big_int)[2:]
+#     return key
 
-import random
-def generate_key(self):
-    big_int = self.__generate_big_int()
-    big_int = big_int % (self.CURVE_ORDER - 1) # key < curve order
-    big_int = big_int + 1 # key > 0
-    key = hex(big_int)[2:]
-    return key
-
-def __generate_big_int(self):
-    if self.prng_state is None:
-        seed = int.from_bytes(self.pool, byteorder='big', signed=False)
-        random.seed(seed)
-        self.prng_state = random.getstate()
-    random.setstate(self.prng_state)
-    big_int = random.getrandbits(self.KEY_BYTES * 8)
-    self.prng_state = random.getstate()
-    return big_int
+# def __generate_big_int(self):
+#     if self.prng_state is None:
+#         seed = int.from_bytes(self.pool, byteorder='big', signed=False)
+#         random.seed(seed)
+#         self.prng_state = random.getstate()
+#     random.setstate(self.prng_state)
+#     big_int = random.getrandbits(self.KEY_BYTES * 8)
+#     self.prng_state = random.getstate()
+#     return big_int
