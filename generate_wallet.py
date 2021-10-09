@@ -1,8 +1,10 @@
+from create_seed import create_seed
 from word_list import word_list
 import hashlib
 import sys
 from utils import padd_binary
-
+from ecdsa.util import PRNG
+from ecdsa import SigningKey, NIST256p
 G = (
     0x79BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F81798,
     0x483ADA7726A3C4655DA4FBFC0E1108A8FD17B448A68554199C47D08FFB10D4B8,
@@ -61,20 +63,6 @@ print(seed)
 print(sys.byteorder)
 print(is_seed_valid(seed))
 
-import random
-def generate_key(self):
-    big_int = self.__generate_big_int()
-    big_int = big_int % (self.CURVE_ORDER - 1) # key < curve order
-    big_int = big_int + 1 # key > 0
-    key = hex(big_int)[2:]
-    return key
-
-def __generate_big_int(self):
-    if self.prng_state is None:
-        seed = int.from_bytes(self.pool, byteorder='big', signed=False)
-        random.seed(seed)
-        self.prng_state = random.getstate()
-    random.setstate(self.prng_state)
-    big_int = random.getrandbits(self.KEY_BYTES * 8)
-    self.prng_state = random.getstate()
-    return big_int
+def getkeys():
+    pub_k = SigningKey.generate(curve = NIST256p, entropy = create_seed())
+    prv_k = pub_k.verifying_key
