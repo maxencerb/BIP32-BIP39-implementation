@@ -1,14 +1,14 @@
-from create_seed import create_seed
+from create_seed import create_seed, get_mnemonic
 from word_list import word_list
 import hashlib
 import sys
-from utils import padd_binary
+from utils import padd_binary, byte_to_binary
 from ecdsa import ECDH, SECP256k1, SigningKey, VerifyingKey
-import binascii
 
-def import_mnemonic(mnemonic):
+def import_mnemonic(mnemonic: str):
     mnemonic_list = mnemonic.split(" ")
-
+    if mnemonic_list[-1] == "":
+        mnemonic_list = mnemonic_list[:-1]
     if len(mnemonic_list) != 12:
         raise ValueError("Invalid mnemonic length")
     
@@ -25,26 +25,24 @@ def import_mnemonic(mnemonic):
 
 def is_seed_valid(seed_bits: str):
     first_bits = seed_bits[:128]
-    seed_bytes = from_bitstring_to_byte(first_bits)
+    seed_bytes = from_bitstring_to_byte(first_bits, 16)
     hash = hashlib.sha256(seed_bytes).digest()
-    hash_bits = bin(int.from_bytes(hash, 'big'))[2:]
+    hash_bits = byte_to_binary(hash, 256)
     return hash_bits[:4] == seed_bits[128:]
 
 
-def from_bitstring_to_byte(bitstring):
+def from_bitstring_to_byte(bitstring, size=32):
     number = int(bitstring, 2)
-    return number.to_bytes(32, byteorder='big')
+    return number.to_bytes(size, byteorder='big')
 
 
 def get_masters(mnemonic):
     bitstring = import_mnemonic(mnemonic)
-    seed =  from_bitstring_to_byte(bitstring)
+    seed = from_bitstring_to_byte(bitstring)
 
     # Get master private key and chaincode
     sha = hashlib.sha512(seed).digest()
-    binary_string = bin(int.from_bytes(sha, sys.byteorder))[2:]
-    for _ in range(512 - len(binary_string)):
-        binary_string = "0" + binary_string
+    binary_string = byte_to_binary(sha, 512)
     private_key = from_bitstring_to_byte(binary_string[:256])
     chain_code = from_bitstring_to_byte(binary_string[256:])
     hashlib.sha512(private_key)
@@ -58,8 +56,3 @@ def get_public_key(private_key: bytes):
     ecdh = ECDH(curve = SECP256k1, private_key=signing_key)
     public_key: VerifyingKey = ecdh.get_public_key()
     return public_key.to_string()
-
-# def getkeys():
-#     pub_k = SigningKey.generate(curve = NIST256p, entropy = create_seed())
-#     prv_k = pub_k.verifying_key
-#     return pub_k,prv_k
