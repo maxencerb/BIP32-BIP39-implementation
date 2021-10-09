@@ -32,7 +32,6 @@ def main():
     parser = argparse.ArgumentParser('Python implementation of a Bitcoin HDWallet')
     parser.add_argument('-i', '--init', action='store_true', help='Initialize a new wallet by returning a securely random bitcoin seed and its mnemonic')
     parser.add_argument('-m', '--mnemonic', metavar='mnemonic', nargs='*', help='Import the 12 words mnemonic')
-    parser.add_argument('-cm', '--check-mnemonic', action='store_true', help='Check if a mnemonic is valid')
     parser.add_argument('-mk', '--master-keys', action='store_true',help='Generate a master keys from a mnemonic')
     args = parser.parse_args()
 

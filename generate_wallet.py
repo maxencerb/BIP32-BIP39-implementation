@@ -56,3 +56,6 @@ def get_public_key(private_key: bytes):
     ecdh = ECDH(curve = SECP256k1, private_key=signing_key)
     public_key: VerifyingKey = ecdh.get_public_key()
     return public_key.to_string()
+
+def child_key(private_key: str, public_key: str, chain_code: str, index: int):
+    pass
