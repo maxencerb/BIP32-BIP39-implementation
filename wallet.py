@@ -1,6 +1,6 @@
 import argparse
 from create_seed import create_seed, get_mnemonic, get_hex
-from generate_wallet import import_mnemonic, is_seed_valid, get_masters
+from generate_wallet import import_mnemonic, is_seed_valid, get_masters, child_key
 import base64
 
 def log_new_seed():
@@ -23,11 +23,7 @@ def check_mnemonic(mnemonic):
         return False
     return seed
 
-def get_master_keys(mnemonic):
-    private, public, chain_code = get_masters(mnemonic)
-    print('Private key: {}'.format(base64.b64encode(private)))
-    print('Public key: {}'.format(base64.b64encode(public)))
-    print('Chain code: {}'.format(base64.b64encode(chain_code)))
+def get_keys(private, public, chain_code):
     print('Private key: {}'.format(private.hex()))
     print('Public key: {}'.format(public.hex()))
     print('Chain code: {}'.format(chain_code.hex()))
@@ -37,6 +33,7 @@ def main():
     parser.add_argument('-i', '--init', action='store_true', help='Initialize a new wallet by returning a securely random bitcoin seed and its mnemonic')
     parser.add_argument('-m', '--mnemonic', metavar='mnemonic', nargs='*', help='Import the 12 words mnemonic')
     parser.add_argument('-mk', '--master-keys', action='store_true',help='Generate a master keys from a mnemonic')
+    parser.add_argument('-gk', '--get-key', type=str, metavar='derivation path', help='Get a key from a mnemonic')
     args = parser.parse_args()
 
     if args.init:
@@ -48,8 +45,13 @@ def main():
 
         if seed:
 
+            private, public, chain = get_masters(mnemonic)
             if args.master_keys:
-                get_master_keys(mnemonic)
+                get_keys(private, public, chain)
+            if args.get_key:
+                print('Derivation path: {}'.format(args.get_key))
+                private, public, chain_code = child_key(private, public, chain, args.get_key.split('/'))
+                get_keys(private, public, chain_code)
    
     else:
         print('No mnemonic provided')
