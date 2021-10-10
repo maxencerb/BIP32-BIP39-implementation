@@ -1,6 +1,7 @@
 import argparse
 from create_seed import create_seed, get_mnemonic, get_hex
 from generate_wallet import import_mnemonic, is_seed_valid, get_masters
+import base64
 
 def log_new_seed():
     seed = create_seed()
@@ -24,6 +25,9 @@ def check_mnemonic(mnemonic):
 
 def get_master_keys(mnemonic):
     private, public, chain_code = get_masters(mnemonic)
+    print('Private key: {}'.format(base64.b64encode(private)))
+    print('Public key: {}'.format(base64.b64encode(public)))
+    print('Chain code: {}'.format(base64.b64encode(chain_code)))
     print('Private key: {}'.format(private.hex()))
     print('Public key: {}'.format(public.hex()))
     print('Chain code: {}'.format(chain_code.hex()))

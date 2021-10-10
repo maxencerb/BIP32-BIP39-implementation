@@ -1,7 +1,5 @@
-from create_seed import create_seed, get_mnemonic
 from word_list import word_list
 import hashlib
-import sys
 from utils import padd_binary, byte_to_binary
 from ecdsa import ECDH, SECP256k1, SigningKey, VerifyingKey
 
@@ -37,16 +35,13 @@ def from_bitstring_to_byte(bitstring, size=32):
 
 
 def get_masters(mnemonic):
-    bitstring = import_mnemonic(mnemonic)
-    seed = from_bitstring_to_byte(bitstring)
+    bitstring = import_mnemonic(mnemonic)[:128]
+    seed = from_bitstring_to_byte(bitstring, 16)
 
     # Get master private key and chaincode
     sha = hashlib.sha512(seed).digest()
-    binary_string = byte_to_binary(sha, 512)
-    private_key = from_bitstring_to_byte(binary_string[:256])
-    chain_code = from_bitstring_to_byte(binary_string[256:])
-    hashlib.sha512(private_key)
-
+    private_key = sha[:32]
+    chain_code = sha[32:]
     # Get master public key
     public_key = get_public_key(private_key)
     return private_key, public_key, chain_code
@@ -55,6 +50,7 @@ def get_public_key(private_key: bytes):
     signing_key = SigningKey.from_string(private_key, curve=SECP256k1, hashfunc=hashlib.sha256)
     ecdh = ECDH(curve = SECP256k1, private_key=signing_key)
     public_key: VerifyingKey = ecdh.get_public_key()
+    print(len(public_key.to_string()))
     return public_key.to_string()
 
 def child_key(private_key: str, public_key: str, chain_code: str, index: int):
