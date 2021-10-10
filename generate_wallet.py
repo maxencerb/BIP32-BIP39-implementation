@@ -1,3 +1,4 @@
+from typing import List
 from word_list import word_list
 import hashlib
 from utils import padd_binary, byte_to_binary
@@ -53,9 +54,15 @@ def get_public_key(private_key: bytes):
     print(len(public_key.to_string()))
     return public_key.to_string()
 
-def child_key(private_key: str, public_key: str, chain_code: str, index: int,extended = False):
-    n = 5 #n = ?
+def child_key(private_key: bytes, public_key: bytes, chain_code: bytes, derivation_path: List[str]):
+    if derivation_path[0] == "m":
+        return child_key(private_key, public_key, chain_code, derivation_path[1:])
+    if len(derivation_path) == 1:
+        return private_key, public_key, chain_code
+    index = int(derivation_path[1])
+    n = 0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141
     hash = hashlib.pbkdf2_hmac('sha512', public_key, chain_code,index)
-    chain_code_child = hash[:32] +bytes(index)
-    child_private_key = private_key + hash[32:] %n
-    return child_private_key,chain_code_child 
+    chain_code_child = hash[:32] + bytes(index)
+    child_private_key = (private_key + hash[32:])
+    child_public_key = get_public_key(child_private_key)
+    return child_key(child_private_key, child_public_key, chain_code_child, derivation_path[1:])
