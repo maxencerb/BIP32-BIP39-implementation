@@ -53,5 +53,9 @@ def get_public_key(private_key: bytes):
     print(len(public_key.to_string()))
     return public_key.to_string()
 
-def child_key(private_key: str, public_key: str, chain_code: str, index: int):
-    pass
+def child_key(private_key: str, public_key: str, chain_code: str, index: int,extended = False):
+    n = 5 #n = ?
+    hash = hashlib.pbkdf2_hmac('sha512', public_key, chain_code,index)
+    chain_code_child = hash[:32] +bytes(index)
+    child_private_key = private_key + hash[32:] %n
+    return child_private_key,chain_code_child 
